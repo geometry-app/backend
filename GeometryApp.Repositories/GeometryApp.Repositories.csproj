@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
+        <Configurations>Debug;Release;publish dev</Configurations>
+        <Platforms>AnyCPU;x64</Platforms>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="CassandraCSharpDriver" Version="3.18.0" />
+      <PackageReference Include="NEST" Version="7.17.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Folleach.Properties\Folleach.Properties.csproj" />
+      <ProjectReference Include="..\GeometryApp.Common\GeometryApp.Common.csproj" />
+    </ItemGroup>
+
+</Project>

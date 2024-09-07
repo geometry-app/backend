@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+      <PackageReference Include="Vostok.Logging.Abstractions" Version="1.0.32" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\GeometryApp.Common\GeometryApp.Common.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <LangVersion>preview</LangVersion>
+        <Configurations>Debug;Release;publish dev</Configurations>
+        <Platforms>AnyCPU;x64</Platforms>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CassandraCSharpDriver" Version="3.18.0" />
+        <PackageReference Include="Folleach.Vostok.Logging.Kafka" Version="0.1.0" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
+        <PackageReference Include="Vostok.Logging.Console" Version="1.0.11-pre000022" />
+        <PackageReference Include="Vostok.Logging.Microsoft" Version="2.0.13" />
+        <PackageReference Include="Vostok.Metrics" Version="0.2.29" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Entities" />
+      <Folder Include="Repositories" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Folleach.Properties\Folleach.Properties.csproj" />
+      <ProjectReference Include="..\GeometryApp.Common\GeometryApp.Common.csproj" />
+      <ProjectReference Include="..\GeometryApp.Explorer.Implementations\GeometryApp.Explorer.Implementations.csproj" />
+      <ProjectReference Include="..\GeometryApp.Repositories\GeometryApp.Repositories.csproj" />
+      <ProjectReference Include="..\GeometryApp.Services.Roulette\GeometryApp.Services.Roulette.csproj" />
+    </ItemGroup>
+
+</Project>

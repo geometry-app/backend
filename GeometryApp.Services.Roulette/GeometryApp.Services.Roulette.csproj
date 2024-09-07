@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Folleach.Properties\Folleach.Properties.csproj" />
+      <ProjectReference Include="..\GeometryApp.Repositories\GeometryApp.Repositories.csproj" />
+      <ProjectReference Include="..\GeometryApp.Common\GeometryApp.Common.csproj" />
+      <ProjectReference Include="..\GeometryApp.Explorer\GeometryApp.Explorer.csproj" />
+    </ItemGroup>
+
+</Project>

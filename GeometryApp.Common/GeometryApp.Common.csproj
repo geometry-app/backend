@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Configurations>Debug;Release;publish dev</Configurations>
+        <Platforms>AnyCPU;x64</Platforms>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="GeometryDashAPI" Version="0.2.29" />
+      <PackageReference Include="System.Text.Json" Version="8.0.4" />
+      <PackageReference Include="Vostok.Logging.Abstractions" Version="1.0.32" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Models/" />
+    </ItemGroup>
+
+</Project>
