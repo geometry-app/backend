@@ -19,7 +19,6 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Vostok.Logging.Abstractions;
 
@@ -40,10 +39,6 @@ namespace GeometryApp.API
             services.AddSingleton(new ServiceInfo("backend-api"));
             services.AddLog(true);
 
-            services.AddLogging(c =>
-            {
-                c.ClearProviders();
-            });
             var environment = Configuration.GetSection("Application").GetSection("env").Value;
             Console.WriteLine($"Environment: {environment}");
             services.AddCors();
