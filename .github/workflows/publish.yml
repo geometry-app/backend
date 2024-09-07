@@ -1,0 +1,22 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 8.0.x
+    - name: docker login
+      run: docker login fcr.folleach.net --username ${{secrets.FCR_USER}} --password ${{secrets.FCR_PASS}}
+    - name: build & upload
+      run: GEOMETRYAPP_DEPLOYMENT_REGISTRY=fcr.folleach.net bash publish.sh GeometryApp.API backend ${{ github.ref_name }}
