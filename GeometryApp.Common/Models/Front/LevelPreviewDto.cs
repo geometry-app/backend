@@ -19,4 +19,5 @@ public class LevelPreviewDto : PreviewEntity
     [DataMember] public Badge[]? Badges { get; set; }
     [DataMember] public int? Likes { get; set; }
     [DataMember] public LengthType? Length { get; set; }
+    [DataMember] public int? Downloads { get; set; }
 }

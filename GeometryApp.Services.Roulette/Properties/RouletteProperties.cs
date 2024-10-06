@@ -11,6 +11,8 @@ public class RouletteProperties
 
     [JsonPropertyName("Type")]
     public string Type { get; set; } = null!;
+    [JsonPropertyName("Parameters")]
+    public string? Parameters { get; set; }
     [JsonPropertyName("OwnerSession")]
     public string OwnerSession { get; set; } = null!;
     [JsonPropertyName("name")]

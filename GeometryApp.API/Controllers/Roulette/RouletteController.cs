@@ -8,6 +8,9 @@ using GeometryApp.API.Controllers.Roulette.Balance;
 using GeometryApp.API.Controllers.Roulette.Create;
 using GeometryApp.API.Controllers.Roulette.Progress;
 using GeometryApp.API.Controllers.Roulette.Publish;
+using GeometryApp.API.Controllers.Search;
+using GeometryApp.API.Services;
+using GeometryApp.Common.Filters;
 using GeometryApp.Common.Models.Elastic.Levels;
 using GeometryApp.Explorer;
 using GeometryApp.Repositories.Elastic;
@@ -23,11 +26,13 @@ public class RouletteController : ControllerBase
 {
     private readonly RouletteService service;
     private readonly ElasticApp elastic;
+    private readonly FiltersService filters;
 
-    public RouletteController(RouletteService service, ElasticApp elastic)
+    public RouletteController(RouletteService service, ElasticApp elastic, FiltersService filters)
     {
         this.service = service;
         this.elastic = elastic;
+        this.filters = filters;
     }
 
     [HttpGet]
@@ -56,7 +61,7 @@ public class RouletteController : ControllerBase
 
     private readonly HashSet<string> possibleTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "default", "challenge", "impossible_list", "auto", "shitty"
+        "default", "challenge", "impossible_list", "auto", "shitty", "advance"
     };
 
     [HttpPost]
@@ -73,7 +78,10 @@ public class RouletteController : ControllerBase
             HttpContext.Response.StatusCode = 400;
             return null;
         };
-        var rouletteSession = await service.CreateSession(request.Type, request.Name, server, request.Weights, sessionId);
+        if (request.Type.Equals("Advance", StringComparison.OrdinalIgnoreCase) && request.Request == null)
+            return null;
+        var prepared = request.Request != null ? new PreparedRequest(SearchController.RemoveIllegalCharacter(request.Request.Text), filters.Enrich(request.Request.Filters).ToArray()) : null;
+        var rouletteSession = await service.CreateSession(request.Type, request.Name, server, request.Weights, prepared, sessionId);
         return rouletteSession;
     }
 

@@ -1,4 +1,5 @@
 ﻿using GeometryApp.Common;
+using GeometryApp.Common.Filters;
 using GeometryApp.Common.Models.Elastic.Levels;
 using GeometryApp.Common.Models.Front;
 using GeometryApp.Repositories.Elastic;
@@ -19,7 +20,7 @@ public class RouletteGenerator : IRouletteGenerator
         this.log = log;
     }
 
-    public async Task<Roulette> CreateRoulette(Guid id, DemonWeights weights, params (string key, string value)[] properties)
+    public async Task<Roulette> CreateRoulette(Guid id, DemonWeights weights, PreparedRequest? request, params (string key, string value)[] properties)
     {
         var type = properties.FirstOrDefault(x => x.key == "type").value;
         var server = properties.FirstOrDefault(x => x.key == "server").value;
@@ -30,10 +31,32 @@ public class RouletteGenerator : IRouletteGenerator
             "challenge" => CreateChallenge(server, weights),
             "auto" => CreateAuto(server),
             "shitty" => CreateShitty(),
+            "advance" => CreateAdvance(request!),
             _ => CreateDefault(server)
         };
         var roulette = Create(id, await documents);
         return roulette;
+    }
+
+    private async Task<List<LevelIndexFull>> CreateAdvance(PreparedRequest request)
+    {
+        var result = await elastic.GetClient().SearchAsync<LevelIndexFull>(x => x
+            .Query(q => q
+                .FunctionScore(s => s
+                    .Query(sq => sq.ApplyQueryRequest(request))
+                    .Boost(2)
+                    .Functions(Enumerable.Range(0, 6).Select(x => new RandomScoreFunction() {
+                        Filter = new QueryContainerDescriptor<LevelIndexFull>().Match(m => m.Field(w => w.MetaPreview!.DemonDifficulty == x)),
+                        Weight = 1
+                    }))
+                    .BoostMode(FunctionBoostMode.Multiply)
+                )
+            )
+            .Size(400)
+        );
+        if (result.ServerError != null)
+            throw new InvalidOperationException(result.ServerError.ToString(), result.OriginalException);
+        return result.Documents.ToList();
     }
 
     private async Task<List<LevelIndexFull>> CreateShitty()

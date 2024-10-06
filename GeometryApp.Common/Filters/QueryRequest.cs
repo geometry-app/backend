@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
-using GeometryApp.Common.Filters;
 
-namespace GeometryApp.API.Controllers.Search.Filters;
+namespace GeometryApp.Common.Filters;
 
 public record QueryRequest(
     [property: JsonPropertyName("t")] string Text,

@@ -5,6 +5,7 @@
         <LangVersion>preview</LangVersion>
         <Configurations>Debug;Release;publish dev</Configurations>
         <Platforms>AnyCPU;x64</Platforms>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>

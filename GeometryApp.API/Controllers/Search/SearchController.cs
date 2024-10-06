@@ -9,6 +9,7 @@ using GeometryApp.API.Controllers.Search.Filters;
 using GeometryApp.API.Extensions;
 using GeometryApp.API.Services;
 using GeometryApp.Common;
+using GeometryApp.Common.Filters;
 using GeometryApp.Common.Models.Elastic.Levels;
 using GeometryApp.Common.Models.Front;
 using GeometryApp.Repositories;
@@ -50,8 +51,8 @@ namespace GeometryApp.API.Controllers.Search
                     PropertyNameCaseInsensitive = false,
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
-                json = json with { Text = RemoveIllegalCharacter(json.Text) };
-                var response = await indexRepository.AdvanceSearch(json.Text, filters.Enrich(json.Filters).ToArray(), page, 50);
+                var prepared = new PreparedRequest(RemoveIllegalCharacter(json.Text), filters.Enrich(json.Filters).ToArray());
+                var response = await indexRepository.AdvanceSearch(prepared, page, 50);
                 return CreateResponse(response);
             }
             catch (FormatException)
@@ -93,7 +94,8 @@ namespace GeometryApp.API.Controllers.Search
                     Server = item.Source?.Server,
                     Type = PreviewType.Level,
                     Likes = item.Source?.MetaPreview?.Likes,
-                    Length = (LengthType)item.Source?.MetaPreview?.Length,
+                    Length = (LengthType)(item.Source?.MetaPreview?.Length ?? 0),
+                    Downloads = item.Source?.MetaPreview?.Download
                 }),
                 Total = response.Total,
                 TimeSpend = response.Took
@@ -140,7 +142,7 @@ namespace GeometryApp.API.Controllers.Search
             };
         }
 
-        private string RemoveIllegalCharacter(string query)
+        internal static string RemoveIllegalCharacter(string query)
         {
             return query == null ? null : IllegalCharacter.Replace(query, string.Empty);
         }

@@ -8,7 +8,7 @@ namespace GeometryApp.Repositories
     public interface IIndexRepository
     {
         Task<ISearchResponse<LevelIndexFull>> SimpleSearch(string query, int skip = 0, int take = 10);
-        Task<ISearchResponse<LevelIndexFull>> AdvanceSearch(string text, InternalFilter[] filters, int skip = 0, int take = 10);
+        Task<ISearchResponse<LevelIndexFull>> AdvanceSearch(PreparedRequest request, int skip = 0, int take = 10);
         Task<ISearchResponse<LevelIndexFull>> LuckySearch();
     }
 }

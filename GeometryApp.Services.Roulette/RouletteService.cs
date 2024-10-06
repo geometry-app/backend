@@ -1,5 +1,7 @@
-﻿using Folleach.Properties;
+﻿using System.Text.Json;
+using Folleach.Properties;
 using GeometryApp.Common;
+using GeometryApp.Common.Filters;
 using GeometryApp.Services.Roulette.Generators;
 using GeometryApp.Services.Roulette.Properties;
 using GeometryApp.Services.Roulette.Repositories;
@@ -25,7 +27,7 @@ public class RouletteService(
     private readonly IRouletteOwnerRepository rouletteOwners = rouletteOwners;
     private readonly ILog log = log.ForContext("RouletteService");
 
-    public async Task<RouletteSession> CreateSession(string type, string name, string server, DemonWeights weights, string? sessionId)
+    public async Task<RouletteSession> CreateSession(string type, string name, string server, DemonWeights weights, PreparedRequest? request, string? sessionId)
     {
         log.Info($"creating roulette with type: {type}");
         var rouletteId = Guid.NewGuid();
@@ -34,6 +36,7 @@ public class RouletteService(
         var insertRoulette = properties.Insert(RouletteProperties.Scope, rouletteId.ToString(), new RouletteProperties()
         {
             Type = type,
+            Parameters = request != null ? JsonSerializer.Serialize(request) : null,
             OwnerSession = sessionId,
             Name = name,
             Id = rouletteId,
@@ -43,7 +46,7 @@ public class RouletteService(
         {
             RouletteId = rouletteId.ToString()
         });
-        var roulette = generator.CreateRoulette(rouletteId, weights, ("type", type), ("server", server));
+        var roulette = generator.CreateRoulette(rouletteId, weights, request, ("type", type), ("server", server));
         await Task.WhenAll(insertRoulette, insertSession, roulette);
         insertRoulette.GetAwaiter().GetResult();
         insertSession.GetAwaiter().GetResult();

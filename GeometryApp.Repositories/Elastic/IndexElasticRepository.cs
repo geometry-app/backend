@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using GeometryApp.Common.Filters;
 using GeometryApp.Common.Models.Elastic.Levels;
@@ -37,41 +35,14 @@ public class IndexElasticRepository : IIndexRepository
         return response;
     }
 
-    public Task<ISearchResponse<LevelIndexFull>> AdvanceSearch(string text, InternalFilter[] filters, int skip = 0, int take = 10)
+    public Task<ISearchResponse<LevelIndexFull>> AdvanceSearch(PreparedRequest request, int skip = 0, int take = 10)
     {
         var client = elastic.GetClient();
-        return client.
-            SearchAsync<LevelIndexFull>(d => d
-            .Query(q => q
-                .Bool(b =>
-                {
-                    var list = new List<Func<QueryContainerDescriptor<LevelIndexFull>, QueryContainer>>();
-                    var notList = new List<Func<QueryContainerDescriptor<LevelIndexFull>, QueryContainer>>();
-
-                    foreach (var filter in filters)
-                    {
-                        var hasNot = (filter.Operator & FilterOperator.Not) == FilterOperator.Not;
-                        if ((filter.Operator & FilterOperator.Equals) == FilterOperator.Equals)
-                            (hasNot ? notList : list).Add(w => w.Term(t => t.Field(filter.Field).Value(filter.Value)));
-                        if ((filter.Operator & FilterOperator.Less) == FilterOperator.Less)
-                            (hasNot ? notList : list).Add(w => w.Range(t => t.Field(filter.Field).LessThan(double.Parse(filter.Value))));
-                        if ((filter.Operator & FilterOperator.More) == FilterOperator.More)
-                            (hasNot ? notList : list).Add(w => w.Range(t => t.Field(filter.Field).GreaterThan(double.Parse(filter.Value))));
-                    }
-
-                    list.Add(w => w.MultiMatch(_ => new MultiMatchQuery()
-                    {
-                        Query = text,
-                        Fields = SimpleSearchFields,
-                        Lenient = true,
-                        Operator = Operator.And
-                    }));
-
-                    return b.Must(list).MustNot(notList);
-                }))
-                .Skip(skip)
-                .Take(take)
-            );
+        return client.SearchAsync<LevelIndexFull>(d => d
+            .Query(q => q.ApplyQueryRequest(request))
+            .Skip(skip)
+            .Take(take)
+        );
     }
 
     public async Task<ISearchResponse<LevelIndexFull>> LuckySearch()
