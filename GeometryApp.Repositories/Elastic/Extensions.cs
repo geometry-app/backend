@@ -23,7 +23,7 @@ public static class Extensions
                 {
                     var hasNot = (filter.Operator & InternalFilterOperator.Not) == InternalFilterOperator.Not;
                     if ((filter.Operator & InternalFilterOperator.Equals) == InternalFilterOperator.Equals)
-                        (hasNot ? notList : list).Add(w => w.Term(t => t.Field(filter.Field).Value(filter.Values)));
+                        (hasNot ? notList : list).Add(w => w.Term(t => t.Field(filter.Field).Value(filter.Values[0])));
                     if ((filter.Operator & InternalFilterOperator.Less) == InternalFilterOperator.Less)
                         (hasNot ? notList : list).Add(w => w.Range(t => t.Field(filter.Field).LessThan(double.Parse(filter.Values[0]))));
                     if ((filter.Operator & InternalFilterOperator.More) == InternalFilterOperator.More)
