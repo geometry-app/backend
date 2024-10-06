@@ -59,6 +59,14 @@ public class IndexElasticRepository : IIndexRepository
                             (hasNot ? notList : list).Add(w => w.Range(t => t.Field(filter.Field).GreaterThan(double.Parse(filter.Value))));
                     }
 
+                    list.Add(w => w.MultiMatch(_ => new MultiMatchQuery()
+                    {
+                        Query = text,
+                        Fields = SimpleSearchFields,
+                        Lenient = true,
+                        Operator = Operator.And
+                    }));
+
                     return b.Must(list).MustNot(notList);
                 }))
                 .Skip(skip)
