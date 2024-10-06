@@ -26,7 +26,10 @@ public class FiltersService
             if (string.IsNullOrEmpty(item.Name))
                 continue;
             if (filters.TryGetValue(item.Name, out var filter))
-                yield return new InternalFilter(filter.Field, item.Value, item.Operator);
+            {
+                var value = filter is IValueMapper mapper ? mapper.Map(item.Value) : item.Value;
+                yield return new InternalFilter(filter.Field, value, item.Operator);
+            }
         }
     }
 }
