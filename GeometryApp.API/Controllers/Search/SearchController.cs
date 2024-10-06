@@ -50,6 +50,7 @@ namespace GeometryApp.API.Controllers.Search
                     PropertyNameCaseInsensitive = false,
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
+                json = json with { Text = RemoveIllegalCharacter(json.Text) };
                 var response = await indexRepository.AdvanceSearch(json.Text, filters.Enrich(json.Filters).ToArray(), page, 50);
                 return CreateResponse(response);
             }
