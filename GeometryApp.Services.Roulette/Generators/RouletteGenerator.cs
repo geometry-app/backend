@@ -20,7 +20,7 @@ public class RouletteGenerator : IRouletteGenerator
         this.log = log;
     }
 
-    public async Task<Roulette> CreateRoulette(Guid id, DemonWeights weights, PreparedRequest? request, params (string key, string value)[] properties)
+    public async Task<Roulette> CreateRoulette(Guid id, RouletteLevelWeights weights, PreparedRequest? request, params (string key, string value)[] properties)
     {
         var type = properties.FirstOrDefault(x => x.key == "type").value;
         var server = properties.FirstOrDefault(x => x.key == "server").value;
@@ -172,7 +172,7 @@ public class RouletteGenerator : IRouletteGenerator
         return result.Documents.ToList();
     }
 
-    private async Task<List<LevelIndexFull>> CreateChallenge(string server, DemonWeights weights)
+    private async Task<List<LevelIndexFull>> CreateChallenge(string server, RouletteLevelWeights weights)
     {
         var documents = new List<LevelIndexFull>();
         var ids = new List<string>();

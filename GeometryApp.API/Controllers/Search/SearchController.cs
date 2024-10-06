@@ -27,7 +27,6 @@ namespace GeometryApp.API.Controllers.Search
         private readonly IIndexRepository indexRepository;
         private readonly FiltersService filters;
         private static readonly string IndexServiceName = "search";
-        private static readonly Regex IllegalCharacter = new Regex(@"[^a-zA-Z0-9 ""]", RegexOptions.Compiled);
 
         public SearchController(IIndexRepository indexRepository, FiltersService filters)
         {
@@ -37,34 +36,23 @@ namespace GeometryApp.API.Controllers.Search
 
         [HttpGet]
         public async Task<ActionResult<SearchResultDto>> Search(
-            [FromQuery(Name = "query")] string query,
+            [FromQuery(Name = "query")] string? query,
             [FromQuery(Name = "page")] int page,
             [FromQuery(Name = "lucky")] int isLucky)
         {
             if (isLucky == 1)
                 return await CreateLuckySearch();
-            try
+            var prepared = SearchHelper.ParseAndPrepare(query, filters);
+            if (prepared != null)
             {
-                var qdata = Encoding.UTF8.GetString(Convert.FromBase64String(query));
-                var json = JsonSerializer.Deserialize<QueryRequest>(qdata, new JsonSerializerOptions()
-                {
-                    PropertyNameCaseInsensitive = false,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                });
-                var prepared = new PreparedRequest(RemoveIllegalCharacter(json.Text), filters.Enrich(json.Filters).ToArray());
-                var response = await indexRepository.AdvanceSearch(prepared, page, 50);
-                return CreateResponse(response);
+                var result = await indexRepository.AdvanceSearch(prepared, page, 50);
+                return CreateResponse(result);
             }
-            catch (FormatException)
-            {
-                query = RemoveIllegalCharacter(query?.ToLower());
-                if (string.IsNullOrWhiteSpace(query))
-                    return CreateEmptyResponse();
-                var response = await indexRepository.SimpleSearch(query, page, 50);
-                return CreateResponse(response);
-            }
-            // why this code is unreachable?
-            return CreateEmptyResponse();
+            query = SearchHelper.RemoveIllegalCharacter(query?.ToLower());
+            if (string.IsNullOrWhiteSpace(query))
+                return CreateEmptyResponse();
+            var response = await indexRepository.SimpleSearch(query, page, 50);
+            return CreateResponse(response);
         }
 
         [HttpGet]
@@ -140,11 +128,6 @@ namespace GeometryApp.API.Controllers.Search
                     }
                 }
             };
-        }
-
-        internal static string RemoveIllegalCharacter(string query)
-        {
-            return query == null ? null : IllegalCharacter.Replace(query, string.Empty);
         }
     }
 }

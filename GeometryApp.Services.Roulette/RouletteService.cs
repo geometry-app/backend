@@ -27,7 +27,7 @@ public class RouletteService(
     private readonly IRouletteOwnerRepository rouletteOwners = rouletteOwners;
     private readonly ILog log = log.ForContext("RouletteService");
 
-    public async Task<RouletteSession> CreateSession(string type, string name, string server, DemonWeights weights, PreparedRequest? request, string? sessionId)
+    public async Task<RouletteSession> CreateSession(string type, string name, string server, RouletteLevelWeights weights, PreparedRequest? request, string? sessionId)
     {
         log.Info($"creating roulette with type: {type}");
         var rouletteId = Guid.NewGuid();

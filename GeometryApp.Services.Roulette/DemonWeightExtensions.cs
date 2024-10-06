@@ -6,13 +6,13 @@ public static class DemonWeightExtensions
 {
     private static readonly Random random = new();
 
-    public static DemonDifficulty GetRandom(this DemonWeights weights)
+    public static DemonDifficulty GetRandom(this RouletteLevelWeights weights)
     {
-        var sum = weights.EasyDemon
-                  + weights.MediumDemon
-                  + weights.HardDemon
-                  + weights.InsaneDemon
-                  + weights.ExtremeDemon;
+        var sum = weights.EasyDemon ?? 0
+                  + weights.MediumDemon ?? 0
+                  + weights.HardDemon ?? 0
+                  + weights.InsaneDemon ?? 0
+                  + weights.ExtremeDemon ?? 0;
         var cumulative = 0f;
         var value = random.NextSingle();
         var pointer = value * sum;
@@ -29,9 +29,9 @@ public static class DemonWeightExtensions
         return DemonDifficulty.Extreme;
     }
 
-    private static bool TrySelect(float pointer, float weight, ref float cumulative)
+    private static bool TrySelect(float pointer, float? weight, ref float cumulative)
     {
-        cumulative += weight;
+        cumulative += weight ?? 0;
         if (pointer < cumulative)
             return true;
         return false;
