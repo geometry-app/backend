@@ -11,6 +11,7 @@ public static class ContainerExtensions
         services.AddSingleton<IFilter, LikesFilter>();
         services.AddSingleton<IFilter, DownloadsFilter>();
         services.AddSingleton<IFilter, ListFilter>();
+        services.AddSingleton<IFilter, DifficultyFilter>();
 
         services.AddSingleton<FiltersService>();
         return services;

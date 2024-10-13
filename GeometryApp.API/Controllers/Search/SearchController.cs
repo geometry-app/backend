@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using GeometryApp.API.Controllers.Search.Autocomplete;
 using GeometryApp.API.Controllers.Search.Filters;
 using GeometryApp.API.Extensions;
 using GeometryApp.API.Services;
@@ -60,6 +61,18 @@ namespace GeometryApp.API.Controllers.Search
         public ActionResult<FindFiltersResponse> FindFilters()
         {
             return new FindFiltersResponse(filters.Definitions);
+        }
+
+        [HttpGet]
+        [Route("completions")]
+        public async Task<ActionResult<AutocompleteResult>> GetCompletionsAsync(
+            [FromQuery(Name = "filter")] string? filter,
+            [FromQuery(Name = "query")] string? query)
+        {
+            if (filter == null)
+                return new AutocompleteResult(string.Empty, []);
+            query ??= string.Empty;
+            return await filters.GetCompletionsAsync(filter, query);
         }
 
         private static SearchResultDto CreateResponse(ISearchResponse<LevelIndexFull> response)

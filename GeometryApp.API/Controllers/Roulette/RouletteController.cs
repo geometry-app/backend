@@ -65,23 +65,20 @@ public class RouletteController : ControllerBase
     };
 
     [HttpPost]
-    public async Task<RouletteSession> CreateSession([FromBody] CreateRouletteSessionRequest request, [FromHeader] string sessionId)
+    public async Task<RouletteSession?> CreateSession([FromBody] CreateRouletteSessionRequest request, [FromHeader] string sessionId)
     {
         if (!possibleTypes.Contains(request.Type))
             return null;
-        var server = request.Server == Resources.GeometryDashServer || request.Server == Resources.GdpsEditorServer
-            ? request.Server
-            : Resources.GeometryDashServer;
 
         if (!RouletteNameValidator.IsMatch(request.Name))
         {
             HttpContext.Response.StatusCode = 400;
             return null;
         };
-        if (request.Type.Equals("Advance", StringComparison.OrdinalIgnoreCase) && request.Request == null)
+        if (request.Type.Equals("Advance", StringComparison.OrdinalIgnoreCase) && (request.Request == null || request.Weights == null))
             return null;
         var prepared = request.Request != null ? new PreparedRequest(SearchHelper.RemoveIllegalCharacter(request.Request.Text), filters.Enrich(request.Request.Filters).ToArray()) : null;
-        var rouletteSession = await service.CreateSession(request.Type, request.Name, server, request.Weights, prepared, sessionId);
+        var rouletteSession = await service.CreateSession(request.Type, request.Name, "geometrydash", request.Weights, request.Request, prepared, sessionId);
         return rouletteSession;
     }
 
@@ -197,8 +194,8 @@ public class RouletteController : ControllerBase
         var dict = demonsAggregation
             .Concat(othersAggregation)
             .ToDictionary(x => (x.type, (long)x.item.Key), x => x.item.DocCount);
-        var sum = (float)(dict.Sum(x => x.Value) ?? 0);
-        var max = GetChanceV2(dict, dict.FirstOrDefault(x => x.Value == dict.Max(m => m.Value)).Key, sum, 1);
+        var sum = dict.Sum(x => x.Value) ?? 0;
+        var max = GetChanceV2(dict, dict.FirstOrDefault(x => x.Value == dict.Max(m => m.Value)).Key, sum, 1) ?? 0;
         var multiply = 1 / max;
         return new BalanceResponse()
         {
@@ -216,17 +213,18 @@ public class RouletteController : ControllerBase
                 HardDemon = GetChanceV2(dict, ("d", 30), sum, multiply),
                 InsaneDemon = GetChanceV2(dict, ("d", 40), sum, multiply),
                 ExtremeDemon = GetChanceV2(dict, ("d", 50), sum, multiply),
-            }
+            },
+            Total = sum
         };
     }
 
-    private static float GetChanceV2(Dictionary<(string type, long key), long?> dict, (string type, long key) key, float sum, float multiply)
+    private static float? GetChanceV2(Dictionary<(string type, long key), long?> dict, (string type, long key) key, float sum, float multiply)
     {
         if (sum == 0)
             return 0;
         return dict.TryGetValue(key, out var value) && value != null
             ? Math.Min(1, MathF.Round(value.Value / sum * multiply, 2))
-            : 0f;
+            : null;
     }
 
     // private async Task<RouletteSession> CreateTypedSession(CreateRouletteSessionRequest request)

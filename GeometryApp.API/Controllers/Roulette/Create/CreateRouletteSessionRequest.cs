@@ -9,9 +9,8 @@ public class CreateRouletteSessionRequest
 {
     public string Type { get; set; }
     public string Name { get; set; }
-    public string Server { get; set; }
     public RouletteLevelWeights Weights { get; set; }
 
     public Guid? RouletteId { get; set; }
-    public QueryRequest? Request { get; set; }
+    public QueryRequest Request { get; set; }
 }

@@ -25,38 +25,77 @@ public class RouletteGenerator : IRouletteGenerator
         var type = properties.FirstOrDefault(x => x.key == "type").value;
         var server = properties.FirstOrDefault(x => x.key == "server").value;
 
-        var documents = type switch
+        var documents = type.ToLower() switch
         {
             "impossible_list" => CreateImpossibleList(),
             "challenge" => CreateChallenge(server, weights),
             "auto" => CreateAuto(server),
             "shitty" => CreateShitty(),
-            "advance" => CreateAdvance(request!),
+            "advance" => CreateAdvance(request!, weights),
             _ => CreateDefault(server)
         };
         var roulette = Create(id, await documents);
         return roulette;
     }
 
-    private async Task<List<LevelIndexFull>> CreateAdvance(PreparedRequest request)
+    private async Task<List<LevelIndexFull>> CreateAdvance(PreparedRequest request, RouletteLevelWeights weights)
     {
-        var result = await elastic.GetClient().SearchAsync<LevelIndexFull>(x => x
-            .Query(q => q
-                .FunctionScore(s => s
-                    .Query(sq => sq.ApplyQueryRequest(request))
-                    .Boost(2)
-                    .Functions(Enumerable.Range(0, 6).Select(x => new RandomScoreFunction() {
-                        Filter = new QueryContainerDescriptor<LevelIndexFull>().Match(m => m.Field(w => w.MetaPreview!.DemonDifficulty == x)),
-                        Weight = 1
-                    }))
-                    .BoostMode(FunctionBoostMode.Multiply)
-                )
-            )
-            .Size(400)
-        );
-        if (result.ServerError != null)
-            throw new InvalidOperationException(result.ServerError.ToString(), result.OriginalException);
-        return result.Documents.ToList();
+        var documents = new List<LevelIndexFull>();
+        var ids = new List<string>();
+        Exception? lastException = null;
+        using (var timer = new AutoTimer(log, "roulette mining documents"))
+        {
+            for (var i = 0; i < 500 && documents.Count != 400; i++)
+            {
+                var difficulty = weights.GetRandomV2() ?? weights.GetRandomV2() ?? throw new InvalidOperationException("failed to select random difficulty");
+                try
+                {
+                    var result = await elastic.GetClient().SearchAsync<LevelIndexFull>(x => x
+                        .Query(q => q
+                            .FunctionScore(s => s
+                                .Query(sq => sq.ApplyQueryRequest(
+                                    request,
+                                    [
+                                        m => m.Match(mm => mm.Field(f => f.MetaPreview!.DifficultyIcon).Query(((int)difficulty.difficulty).ToString())),
+                                        m => m.Match(mm => mm.Field(f => f.MetaPreview!.IsDemon).Query(difficulty.demon ? "true" : "false"))
+                                    ],
+                                    [m => m.Ids(x => x.Values(ids))])
+                                )
+                                .Boost(2)
+                                .Functions(fu => fu.RandomScore())
+                                .BoostMode(FunctionBoostMode.Multiply)
+                            )
+                        )
+                        .Size(1)
+                    );
+                    if (result.ServerError != null)
+                    {
+                        lastException = new InvalidOperationException(result.ServerError.ToString(), result.OriginalException);
+                    }
+
+                    var hit = result.Hits.FirstOrDefault();
+                    if (hit != null)
+                    {
+                        documents.Add(hit.Source);
+                        ids.Add(hit.Id);
+                    }
+                    else
+                    {
+                        ids.Clear();
+                    }
+                }
+                catch (Exception e)
+                {
+                    lastException = e;
+                }
+            }
+        }
+
+        if (documents.Count < 400 && lastException != null)
+            throw lastException;
+        if (documents.Count < 400)
+            throw new InvalidOperationException("can't find 400 documents");
+        return documents;
     }
 
     private async Task<List<LevelIndexFull>> CreateShitty()

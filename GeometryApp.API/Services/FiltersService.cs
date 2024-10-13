@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using GeometryApp.API.Controllers.Search.Autocomplete;
 using GeometryApp.API.Services.Filters;
 using GeometryApp.Common.Filters;
 
@@ -24,10 +26,21 @@ public class FiltersService
                 continue;
             if (filters.TryGetValue(item.Name, out var filter))
             {
-                var value = filter is IValueMapper mapper ? mapper.Map(item.Value) : item.Value;
-                var @operator = filter is ICustomOperator customOperator ? customOperator.Map(item.Operator) : (InternalFilterOperator)item.Operator;
-                yield return new InternalFilter(filter.Field, [value], @operator);
+                foreach (var next in filter.Enrich(item))
+                    yield return next;
             }
         }
+    }
+
+    public async Task<AutocompleteResult> GetCompletionsAsync(string name, string request)
+    {
+        if (!filters.TryGetValue(name, out var filter) || filter is not IAutoComplete completable)
+            return new AutocompleteResult(string.Empty, []);
+        var additionals = await completable.GetCompletionsAsync();
+        var filtered = additionals
+            .Where(x => x.StartsWith(request, System.StringComparison.OrdinalIgnoreCase))
+            .Select(x => x.Substring(request.Length))
+            .ToArray();
+        return new AutocompleteResult(request, filtered);
     }
 }

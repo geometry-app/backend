@@ -14,8 +14,4 @@
       <PackageReference Include="Vostok.Logging.Abstractions" Version="1.0.32" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Models/" />
-    </ItemGroup>
-
 </Project>

@@ -27,7 +27,7 @@ public class RouletteService(
     private readonly IRouletteOwnerRepository rouletteOwners = rouletteOwners;
     private readonly ILog log = log.ForContext("RouletteService");
 
-    public async Task<RouletteSession> CreateSession(string type, string name, string server, RouletteLevelWeights weights, PreparedRequest? request, string? sessionId)
+    public async Task<RouletteSession> CreateSession(string type, string name, string server, RouletteLevelWeights weights, QueryRequest? original, PreparedRequest? request, string? sessionId)
     {
         log.Info($"creating roulette with type: {type}");
         var rouletteId = Guid.NewGuid();
@@ -36,7 +36,11 @@ public class RouletteService(
         var insertRoulette = properties.Insert(RouletteProperties.Scope, rouletteId.ToString(), new RouletteProperties()
         {
             Type = type,
-            Parameters = request != null ? JsonSerializer.Serialize(request) : null,
+            Parameters = JsonSerializer.Serialize(new RouletteV2Parameters()
+            {
+                Request = original ?? new QueryRequest(null, []),
+                Weights = weights
+            }),
             OwnerSession = sessionId,
             Name = name,
             Id = rouletteId,
@@ -74,13 +78,16 @@ public class RouletteService(
             return null;
         roulette.Name = props.Name ?? "unnamed";
         roulette.IsPublished = props.IsPublished;
+        var parameters = props.Parameters != null ? JsonSerializer.Deserialize<RouletteV2Parameters>(props.Parameters) : null;
 
         return new RouletteSession()
         {
             Roulette = roulette,
             SessionId = sessionId,
             Progress = state,
-            IsStarted = state.Any() || props.OwnerSession == sessionId
+            IsStarted = state.Any() || props.OwnerSession == sessionId,
+            Request = parameters?.Request,
+            Weights = parameters?.Weights
         };
     }
 
@@ -116,14 +123,20 @@ public class RouletteService(
             .Select(x => properties.Get<RouletteProperties>(RouletteProperties.Scope, x.RouletteId.ToString()))
             .ToArray();
         await Task.WhenAll(tasks);
-        return tasks.Select(x => new RouletteSessionPreview()
+        return tasks.Select(x =>
         {
-            Id = x.Result.Id,
-            Name = x.Result.Name ?? "unnamed",
-            Type = x.Result.Type,
-            Owner = x.Result.OwnerSession == sessionId,
-            IsPublic = x.Result.IsPublished,
-            CreateDt = x.Result.CreateDt
+            var parameters = x.Result.Parameters != null ? JsonSerializer.Deserialize<RouletteV2Parameters>(x.Result.Parameters) : null;
+            return new RouletteSessionPreview()
+            {
+                Id = x.Result.Id,
+                Name = x.Result.Name ?? "unnamed",
+                Type = x.Result.Type,
+                Owner = x.Result.OwnerSession == sessionId,
+                IsPublic = x.Result.IsPublished,
+                CreateDt = x.Result.CreateDt,
+                Request = parameters?.Request,
+                Weights = parameters?.Weights
+            };
         });
     }
 

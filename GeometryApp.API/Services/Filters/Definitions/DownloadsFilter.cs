@@ -1,15 +1,18 @@
-using System;
+using System.Collections.Generic;
+using GeometryApp.Common.Filters;
 
 namespace GeometryApp.API.Services.Filters.Definitions;
 
 public class DownloadsFilter : IFilter
 {
+    public const string Field = "metaPreview.download";
+
     public string Name => "downloads";
 
-    public string Field => "metaPreview.download";
+    public FilterDefinition GetDefinition() => new(FilterType.Number, Name);
 
-    public FilterDefinition GetDefinition()
+    public IEnumerable<InternalFilter> Enrich(Filter item)
     {
-        return new FilterDefinition(FilterType.Number, Name);
+        yield return new InternalFilter(Field, [item.Value], (InternalFilterOperator)item.Operator);
     }
 }
